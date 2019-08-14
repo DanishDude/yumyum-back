@@ -8,6 +8,8 @@ import path from 'path';
 // import favicon from 'serve-favicon';
 
 import index from './routes/index';
+import customer from './routes/customer';
+import cart from './routes/cart';
 
 const app = express();
 const debug = Debug('yumyum-back:app');
@@ -30,6 +32,8 @@ app.use(sassMiddleware({
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
+app.use('/api', customer);
+app.use('/api', cart);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
