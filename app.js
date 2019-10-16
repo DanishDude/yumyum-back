@@ -2,6 +2,7 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import Debug from 'debug';
 import express from 'express';
+import cors from 'cors';
 import logger from 'morgan';
 import sassMiddleware from 'node-sass-middleware';
 import path from 'path';
@@ -13,6 +14,7 @@ import cart from './routes/cart';
 import orders from './routes/orders';
 import product from './routes/product';
 import status from './routes/status';
+import recepie from './routes/recepie';
 
 const app = express();
 const debug = Debug('yumyum-back:app');
@@ -33,6 +35,7 @@ app.use(sassMiddleware({
   sourceMap: true
 }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors());
 
 app.use('/', index);
 app.use('/api', customer);
@@ -40,6 +43,7 @@ app.use('/api', cart);
 app.use('/api', orders);
 app.use('/api', product);
 app.use('/api', status);
+app.use('/api', recepie);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
