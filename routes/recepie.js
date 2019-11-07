@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
 
 const acceptableFileTypes = ['image/jpeg', 'image/png'];
 const fileFilter = (req, file, cb) => {
-  if (acceptableFileTypes.includes(file.mimeType)) {
+  if (acceptableFileTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(new Error('Only .jpeg or .png files are accepted'), false);
@@ -40,13 +40,61 @@ router.get('/recepie', (req, res) => {
   });
 });
 
-// Add recepie
+// Get 1 recepie by id
+router.get('/recepie/:id', (req, res) => {
+  const id = req.params.id;
+  console.log(id);
+
+  connection.query('SELECT * FROM recepie WHERE id = ?', id, (err, recepie) => {
+    if (err) {
+      res.status(500).send('Ah Snap :-/');
+    } else {
+      console.log('RECEPIE ', recepie);
+
+      res.json(recepie).sendFile(`../public/images/${recepie.image}`);
+    }
+  });
+});
+
+// Get recepie image by recepie id
+router.get('/recepieImage/:id', (req, res) => { // TODO resolve app crash when sending id that does not exist
+  const id = req.params.id;
+
+  connection.query('SELECT image FROM recepie WHERE id = ?', id, (err, result) => {
+    const fileName = result[0].image;
+    const options = {
+      root: 'public/images/',
+      dotfiles: 'deny',
+      headers: {
+        'x-timestamp': Date.now(),
+        'x-sent': true
+      }
+    };
+
+    if (err) {
+      res.status(500).send('Ah Snap :-/');
+    } else {
+      console.log('RESULT', result);
+
+      res.sendFile(fileName, options, () => {
+        if (err) {
+          throw new Error(err);
+        } else {
+          console.log(' Sent', fileName);
+        }
+      });
+    }
+  });
+});
+
 router.post('/recepie', upload.single('recepieImage'), (req, res) => {
-  console.log('REQ.FILE', req.file); // https://www.youtube.com/watch?v=srPXMt1Q0nY
+  console.log(req.file);
+
+  req.body.image = req.file.filename;
   connection.query('INSERT INTO recepie SET ?', req.body, (err, results) => {
     if (err) {
       console.log(err);
-      res.status(500).send('Ah Snap :-/');
+      res.status(500).send(err);
     } else {
       res.json(results);
     }
@@ -67,7 +115,7 @@ router.put('/recepie/:id', (req, res) => {
 });
 
 // Delete recepie
-router.delete('/recepie/:id', (req, res) => {
+router.delete('/recepie/:id', (req, res) => { // TODO delete recepie image as well
   const id = req.params.id;
   connection.query(`DELETE FROM recepie WHERE id=${id}`, (err, results) => {
     if (err) {
