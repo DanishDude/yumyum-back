@@ -14,7 +14,7 @@ import cart from './routes/cart';
 import orders from './routes/orders';
 import product from './routes/product';
 import status from './routes/status';
-import recepie from './routes/recepie';
+import recipe from './routes/recipe';
 
 const app = express();
 const debug = Debug('yumyum-back:app');
@@ -43,7 +43,7 @@ app.use('/api', cart);
 app.use('/api', orders);
 app.use('/api', product);
 app.use('/api', status);
-app.use('/api', recepie);
+app.use('/api', recipe);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

@@ -29,38 +29,38 @@ const upload = multer({
   fileFilter
 });
 
-// Get all recepies
-router.get('/recepie', (req, res) => {
-  connection.query('SELECT * FROM recepie;', (err, recepies) => {
+// Get all recipes
+router.get('/recipe', (req, res) => {
+  connection.query('SELECT * FROM recipe;', (err, recipes) => {
     if (err) {
       res.status(500).send('Ah Snap :-/');
     } else {
-      res.json(recepies);
+      res.json(recipes);
     }
   });
 });
 
-// Get 1 recepie by id
-router.get('/recepie/:id', (req, res) => {
+// Get 1 recipe by id
+router.get('/recipe/:id', (req, res) => {
   const id = req.params.id;
   console.log(id);
 
-  connection.query('SELECT * FROM recepie WHERE id = ?', id, (err, recepie) => {
+  connection.query('SELECT * FROM recipe WHERE id = ?', id, (err, recipe) => {
     if (err) {
       res.status(500).send('Ah Snap :-/');
     } else {
-      console.log('RECEPIE ', recepie);
+      console.log('RECIPE ', recipe);
 
-      res.json(recepie).sendFile(`../public/images/${recepie.image}`);
+      res.json(recipe).sendFile(`../public/images/${recipe.image}`);
     }
   });
 });
 
-// Get recepie image by recepie id
-router.get('/recepieImage/:id', (req, res) => { // TODO resolve app crash when sending id that does not exist
+// Get recipe image by recipe id
+router.get('/recipeImage/:id', (req, res) => { // TODO resolve app crash when sending id that does not exist
   const id = req.params.id;
 
-  connection.query('SELECT image FROM recepie WHERE id = ?', id, (err, result) => {
+  connection.query('SELECT image FROM recipe WHERE id = ?', id, (err, result) => {
     const fileName = result[0].image;
     const options = {
       root: 'public/images/',
@@ -87,11 +87,11 @@ router.get('/recepieImage/:id', (req, res) => { // TODO resolve app crash when s
   });
 });
 
-router.post('/recepie', upload.single('recepieImage'), (req, res) => {
+router.post('/recipe', upload.single('recipeImage'), (req, res) => {
   console.log(req.file);
 
   req.body.image = req.file.filename;
-  connection.query('INSERT INTO recepie SET ?', req.body, (err, results) => {
+  connection.query('INSERT INTO recipe SET ?', req.body, (err, results) => {
     if (err) {
       console.log(err);
       res.status(500).send(err);
@@ -101,11 +101,11 @@ router.post('/recepie', upload.single('recepieImage'), (req, res) => {
   });
 });
 
-// Modify recepie
-router.put('/recepie/:id', (req, res) => {
+// Modify recipe
+router.put('/recipe/:id', (req, res) => {
   const formData = req.body;
   const id = req.params.id;
-  connection.query('UPDATE recepie SET ? WHERE id = ?', [formData, id], (err, results) => {
+  connection.query('UPDATE recipe SET ? WHERE id = ?', [formData, id], (err, results) => {
     if (err) {
       res.status(500).send('Ah Snap :-/');
     } else {
@@ -114,10 +114,10 @@ router.put('/recepie/:id', (req, res) => {
   });
 });
 
-// Delete recepie
-router.delete('/recepie/:id', (req, res) => { // TODO delete recepie image as well
+// Delete recipe
+router.delete('/recipe/:id', (req, res) => { // TODO delete recipe image as well
   const id = req.params.id;
-  connection.query(`DELETE FROM recepie WHERE id=${id}`, (err, results) => {
+  connection.query(`DELETE FROM recipe WHERE id=${id}`, (err, results) => {
     if (err) {
       res.status(500).send('Ah Snap :-/');
     } else {
