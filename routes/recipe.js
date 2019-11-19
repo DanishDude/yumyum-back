@@ -43,7 +43,7 @@ router.get('/recipe', (req, res) => {
 // Get 1 recipe by id
 router.get('/recipe/:id', (req, res) => {
   const id = req.params.id;
-  console.log(id);
+  console.log(`Recipe id ${id}`);
 
   connection.query('SELECT * FROM recipe WHERE id = ?', id, (err, recipe) => {
     if (err) {
@@ -74,22 +74,14 @@ router.get('/recipeImage/:id', (req, res) => { // TODO resolve app crash when se
     if (err) {
       res.status(500).send('Ah Snap :-/');
     } else {
-      console.log('RESULT', result);
-
       res.sendFile(fileName, options, () => {
-        if (err) {
-          throw new Error(err);
-        } else {
-          console.log(' Sent', fileName);
-        }
+        if (err) throw new Error(err);
       });
     }
   });
 });
 
 router.post('/recipe', upload.single('recipeImage'), (req, res) => {
-  console.log(req.file);
-
   req.body.image = req.file.filename;
   connection.query('INSERT INTO recipe SET ?', req.body, (err, results) => {
     if (err) {
@@ -103,15 +95,22 @@ router.post('/recipe', upload.single('recipeImage'), (req, res) => {
 
 // Modify recipe
 router.put('/recipe/:id', (req, res) => {
-  const formData = req.body;
-  const id = req.params.id;
-  connection.query('UPDATE recipe SET ? WHERE id = ?', [formData, id], (err, results) => {
-    if (err) {
-      res.status(500).send('Ah Snap :-/');
-    } else {
-      res.json(results);
-    }
-  });
+  try {
+    const formData = req.body;
+    const id = req.params.id;
+    console.log(id, formData);
+
+    connection.query('UPDATE recipe SET ? WHERE id = ?', [formData, id], (err, results) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('Ah Snap :-/');
+      } else {
+        res.json(results);
+      }
+    });
+  } catch (e) {
+    throw new Error(e);
+  }
 });
 
 // Delete recipe
