@@ -1,10 +1,10 @@
 import express from 'express';
+import { Strategy as LocalStrategy } from 'passport-local';
+import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import connection from '../conf';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Strategy as LocalStrategy } from 'passport-local';
-import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 
 const router = express.Router();
 
@@ -38,24 +38,27 @@ passport.use(new JwtStrategy({
 }, (jwtPayload, cb) => cb(null, jwtPayload)));
 
 router.post('/signup', (req, res) => {
-  console.log(req.body);
-  
+  console.log('REQ.BODY ', req.body);
+
   const user = {
     ...req.body,
     password: bcrypt.hashSync(req.body.password, 10),
   };
+
   connection.query('INSERT INTO user SET ?', user, (err) => {
     if (err) {
       console.log(err);
-      res.status(500);
+      res.status(500).send(err);
     } else {
-      console.log(user);
-      res.sendStatus(201);
+      console.log('USER ', user);
+      const token = jwt.sign(user, 'lc_passport');
+      console.log('hello');
+      res.status(201).json({ email: user.email, token });
     }
   });
 });
 
-router.post('/signin', (req, res) => {
+router.post('/login', (req, res) => {
   passport.authenticate('local', (err, user) => {
     if (err) {
       console.log(err);
