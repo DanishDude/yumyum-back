@@ -43,46 +43,43 @@ router.get('/recipe', (req, res) => {
 // Get 1 recipe by id
 router.get('/recipe/:id', (req, res) => {
   const id = req.params.id;
-  console.log(`Recipe id ${id}`);
-
   connection.query('SELECT * FROM recipe WHERE id = ?', id, (err, recipe) => {
     if (err) {
       res.status(500).send('Ah Snap :-/');
     } else {
-      console.log('RECIPE ', recipe);
-
       res.json(recipe).sendFile(`../public/images/${recipe.image}`);
     }
   });
 });
 
 // Get recipe image by recipe id
-router.get('/recipeImage/:id', (req, res) => { // TODO resolve app crash when sending id that does not exist
-  const id = req.params.id;
+router.get('/recipeImage/:id', (req, res, next) => {
+  try {
+    const id = req.params.id;
+    connection.query('SELECT image FROM recipe WHERE id = ?', id, (err, result) => {
+      const fileName = result[0].image || 'empty_plate_1575398123409.jpg';
 
-  connection.query('SELECT image FROM recipe WHERE id = ?', id, (err, result) => {
-    const fileName = result[0].image;
-    const options = {
-      root: 'public/images/',
-      dotfiles: 'deny',
-      headers: {
-        'x-timestamp': Date.now(),
-        'x-sent': true
-      }
-    };
+      const options = {
+        root: 'public/images/',
+        dotfiles: 'deny',
+        headers: {
+          'x-timestamp': Date.now(),
+          'x-sent': true
+        }
+      };
 
-    if (err) {
-      res.status(500).send('Ah Snap :-/');
-    } else {
       res.sendFile(fileName, options, () => {
         if (err) throw new Error(err);
       });
-    }
-  });
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
+// If no image / file sent - app crash
 router.post('/recipe', upload.single('recipeImage'), (req, res) => {
-  req.body.image = req.file.filename;
+  if (req.file) req.body.image = req.file.filename || null;
   connection.query('INSERT INTO recipe SET ?', req.body, (err, results) => {
     if (err) {
       console.log(err);
@@ -98,7 +95,6 @@ router.put('/recipe/:id', (req, res) => {
   try {
     const formData = req.body;
     const id = req.params.id;
-    console.log(id, formData);
 
     connection.query('UPDATE recipe SET ? WHERE id = ?', [formData, id], (err, results) => {
       if (err) {
@@ -108,8 +104,8 @@ router.put('/recipe/:id', (req, res) => {
         res.json(results);
       }
     });
-  } catch (e) {
-    throw new Error(e);
+  } catch (err) {
+    throw new Error(err);
   }
 });
 
