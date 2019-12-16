@@ -107,18 +107,20 @@ router.put('/recipe/:id', (req, res) => {
   } catch (err) {
     throw new Error(err);
   }
-});
-
-// Delete recipe
-router.delete('/recipe/:id', (req, res) => { // TODO delete recipe image as well
-  const id = req.params.id;
-  connection.query(`DELETE FROM recipe WHERE id=${id}`, (err, results) => {
-    if (err) {
-      res.status(500).send('Ah Snap :-/');
-    } else {
-      res.json(results);
+})
+  .delete('/recipe/:id', (req, res, next) => { // TODO delete recipe image as well
+    try {
+      const id = req.params.id;
+      connection.query(`DELETE FROM recipe WHERE id=${id}`, (err) => {
+        if (err) {
+          res.status(500).send('Ah Snap :-/');
+        } else {
+          res.status(200).send(`recipe ${id} deleted`);
+        }
+      });
+    } catch (err) {
+      next(err);
     }
   });
-});
 
 export default router;
