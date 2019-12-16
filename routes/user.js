@@ -1,10 +1,10 @@
 import express from 'express';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
-import connection from '../conf';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import connection from '../conf';
 
 const router = express.Router();
 
