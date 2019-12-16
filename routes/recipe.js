@@ -40,19 +40,7 @@ router.get('/recipe', (req, res) => {
   });
 });
 
-// Get 1 recipe by id
-router.get('/recipe/:id', (req, res) => {
-  const id = req.params.id;
-  connection.query('SELECT * FROM recipe WHERE id = ?', id, (err, recipe) => {
-    if (err) {
-      res.status(500).send('Ah Snap :-/');
-    } else {
-      res.json(recipe).sendFile(`../public/images/${recipe.image}`);
-    }
-  });
-});
-
-// Get recipe image by recipe id
+// TODO modify and delete image
 router.get('/recipeImage/:id', (req, res, next) => {
   try {
     const id = req.params.id;
@@ -90,27 +78,36 @@ router.post('/recipe', upload.single('recipeImage'), (req, res) => {
   });
 });
 
-// Modify recipe
-router.put('/recipe/:id', (req, res) => {
+router.get('/recipe/:id', (req, res, next) => {
   try {
-    const formData = req.body;
-    const id = req.params.id;
-
-    connection.query('UPDATE recipe SET ? WHERE id = ?', [formData, id], (err, results) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('Ah Snap :-/');
-      } else {
-        res.json(results);
-      }
+    const { id } = req.params;
+    connection.query(`SELECT * FROM recipe WHERE id = ${id}`, (err, results) => {
+      res.status(200).send(results);
     });
   } catch (err) {
-    throw new Error(err);
+    next(err);
   }
 })
-  .delete('/recipe/:id', (req, res, next) => { // TODO delete recipe image as well
+  .put((req, res) => {
     try {
-      const id = req.params.id;
+      const formData = req.body;
+      const { id } = req.params;
+
+      connection.query('UPDATE recipe SET ? WHERE id = ?', [formData, id], (err, results) => {
+        if (err) {
+          console.log(err);
+          res.status(500).send('Ah Snap :-/');
+        } else {
+          res.json(results);
+        }
+      });
+    } catch (err) {
+      throw new Error(err);
+    }
+  })
+  .delete((req, res, next) => { // TODO delete recipe image as well
+    try {
+      const { id } = req.params;
       connection.query(`DELETE FROM recipe WHERE id=${id}`, (err) => {
         if (err) {
           res.status(500).send('Ah Snap :-/');
