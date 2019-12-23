@@ -36,7 +36,7 @@ passport.use('local', new LocalStrategy({
 
 passport.use(new JwtStrategy({
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: privateKey, // 'lc_passport',
+  secretOrKey: privateKey,
 }, (jwtPayload, cb) => cb(null, jwtPayload)));
 
 router.post('/signup', (req, res) => {
@@ -53,8 +53,7 @@ router.post('/signup', (req, res) => {
       res.status(500).send(err);
     } else {
       console.log('USER ', user);
-      const token = jwt.sign(user, privateKey/*  'lc_passport' */);
-      console.log('hello');
+      const token = jwt.sign(user, privateKey);
       res.status(201).json({ email: user.email, token });
     }
   });
@@ -70,26 +69,9 @@ router.post('/login', (req, res) => {
       return res.status(401).send('user not found');
     }
     console.log('USER: ', user);
-    
-    const token = jwt.sign(user, privateKey/*  'lc_passport' */);
-    console.log(token);
+    const token = jwt.sign(user, privateKey);
     return res.json({ user, token });
   })(req, res);
-});
-
-router.get('/toto', (req, res, next) => {
-  try {
-    const token = req.token;
-    const yoyo = jwt.decode(token);
-    console.log('yoyo: ', yoyo);
-
-    const jojo = jwt.verify(token, privateKey/*  'lc_passport' */);
-    console.log('jojo: ', jojo);
-
-    res.status(200).send('hello');
-  } catch (err) {
-    next(err);
-  }
 });
 
 module.exports = router;
