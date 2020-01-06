@@ -74,4 +74,16 @@ router.post('/login', (req, res) => {
   })(req, res);
 });
 
+router.get('/user', (req, res, next) => {
+  try {
+    if (req.user) {
+      res.status(200).send(req.user);
+    } else {
+      res.status(404).send('user not found');
+    };
+  } catch (err) {
+    next(err);
+  };
+});
+
 module.exports = router;
