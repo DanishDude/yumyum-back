@@ -1,11 +1,12 @@
+import bearerToken from 'express-bearer-token';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import Debug from 'debug';
 import express from 'express';
-import cors from 'cors';
 import logger from 'morgan';
-import sassMiddleware from 'node-sass-middleware';
 import path from 'path';
+import sassMiddleware from 'node-sass-middleware';
 // import favicon from 'serve-favicon';
 
 import index from './routes/index';
@@ -15,6 +16,8 @@ import orders from './routes/orders';
 import product from './routes/product';
 import status from './routes/status';
 import recipe from './routes/recipe';
+import user from './routes/user';
+import accessControl from './loaders/accessControl';
 
 const app = express();
 const debug = Debug('yumyum-back:app');
@@ -37,6 +40,9 @@ app.use(sassMiddleware({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 
+app.use(bearerToken());
+app.use(accessControl.hydrateReq);
+
 app.use('/', index);
 app.use('/api', customer);
 app.use('/api', cart);
@@ -44,6 +50,7 @@ app.use('/api', orders);
 app.use('/api', product);
 app.use('/api', status);
 app.use('/api', recipe);
+app.use('/api', user);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
