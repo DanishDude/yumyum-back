@@ -29,8 +29,7 @@ const upload = multer({
   fileFilter
 });
 
-// Get all recipes
-router.get('/recipe', (req, res) => {
+router.get('/recipes', (req, res) => {
   connection.query('SELECT * FROM recipe;', (err, recipes) => {
     if (err) {
       res.status(500).send('Ah Snap :-/');
@@ -39,6 +38,17 @@ router.get('/recipe', (req, res) => {
     }
   });
 });
+
+router.get('/recipes/:userId', (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    connection.query(`SELECT * FROM recipe WHERE user_id = ${userId}`, (err, recipes) => {
+      res.status(200).send(recipes);
+    })
+  } catch (err) {
+    next(err);
+  }
+})
 
 // TODO modify and delete image
 router.get('/recipeImage/:id', (req, res, next) => {
