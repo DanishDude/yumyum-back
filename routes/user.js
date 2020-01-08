@@ -15,7 +15,8 @@ passport.use('local', new LocalStrategy({
   session: false,
 }, (email, password, done) => {
   try {
-    connection.query('SELECT id, email, password FROM user WHERE email = ?', [email], (err, results) => {
+    connection.query(`SELECT id, email, displayname, firstname, lastname, password
+                      FROM user WHERE email = ?`, [email], (err, results) => {
       if (err) {
         return done(err, false);
       } else if (results.length === 0) {
@@ -24,6 +25,9 @@ passport.use('local', new LocalStrategy({
         const user = {
           id: results[0].id,
           email: results[0].email,
+          displayname: results[0].displayname,
+          firstname: results[0].firstname,
+          lastname: results[0].lastname
         };
         return done(null, user);
       }
@@ -52,9 +56,10 @@ router.post('/signup', (req, res) => {
       console.log(err);
       res.status(500).send(err);
     } else {
-      console.log('USER ', user);
       const token = jwt.sign(user, privateKey);
-      res.status(201).json({ email: user.email, token });
+      delete user.password
+      console.log('USER ', user);
+      res.status(201).json({ user, token });
     }
   });
 });
