@@ -48,7 +48,7 @@ router.get('/recipes/:userId', (req, res, next) => {
   } catch (err) {
     next(err);
   }
-})
+});
 
 // TODO modify and delete image
 router.get('/recipeImage/:id', (req, res, next) => {
