@@ -1,6 +1,7 @@
 const express = require('express');
 const connection = require('../conf');
 const multer = require('multer');
+const fs = require('fs');
 
 const router = express.Router();
 const storage = multer.diskStorage({
@@ -76,8 +77,9 @@ router.get('/recipeImage/:id', (req, res, next) => {
 });
 
 // If no image / file sent - app crash
-router.post('/recipe', upload.single('recipeImage'), (req, res) => {
-  if (req.file) req.body.image = req.file.filename || null;
+router.post('/recipe', upload.single('recipeImage'), (req, res, next) => {
+  if (req.user) req.body.user_id = req.user.id;
+  if (req.file) req.body.image = req.file.filename;
   connection.query('INSERT INTO recipe SET ?', req.body, (err, results) => {
     if (err) {
       console.log(err);
@@ -86,6 +88,19 @@ router.post('/recipe', upload.single('recipeImage'), (req, res) => {
       res.json(results);
     }
   });
+});
+
+router.put('/recipe/:id', upload.single('recipeImage'), (req, res, next) => {
+  try {
+    if (req.file) req.body.image = req.file.filename;
+    const { id } = req.params;
+    
+    connection.query(`UPDATE recipe SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
+      res.status(200).send(results);
+    });
+  } catch (err) {
+    next(err);
+  };
 });
 
 router.get('/recipe/:id', (req, res, next) => {
@@ -97,37 +112,34 @@ router.get('/recipe/:id', (req, res, next) => {
   } catch (err) {
     next(err);
   }
-})
-  .put((req, res) => {
-    try {
-      const formData = req.body;
-      const { id } = req.params;
+});
 
-      connection.query('UPDATE recipe SET ? WHERE id = ?', [formData, id], (err, results) => {
-        if (err) {
-          console.log(err);
-          res.status(500).send('Ah Snap :-/');
+router.delete('/recipe/:id', (req, res, next) => {
+  try {
+    const { id } = req.params;
+    connection.query(`SELECT id, image FROM recipe WHERE id = ${id}`, (err, result) => {
+      const filePath = `./public/images/${result[0].image}`;
+      fs.access(filePath, error => {
+        if (!error) {
+          fs.unlink(filePath, e => {
+            console.log(e);
+          });
         } else {
-          res.json(results);
-        }
+          console.log(error);
+        };
       });
-    } catch (err) {
-      throw new Error(err);
-    }
-  })
-  .delete((req, res, next) => { // TODO delete recipe image as well
-    try {
-      const { id } = req.params;
-      connection.query(`DELETE FROM recipe WHERE id=${id}`, (err) => {
-        if (err) {
-          res.status(500).send('Ah Snap :-/');
-        } else {
-          res.status(200).send(`recipe ${id} deleted`);
-        }
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
+    });
+
+    connection.query(`DELETE FROM recipe WHERE id=${id}`, (err) => {
+      if (err) {
+        res.status(500).send('Ah Snap :-/');
+      } else {
+        res.status(200).send(`recipe ${id} deleted`);
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 export default router;

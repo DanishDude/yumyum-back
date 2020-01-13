@@ -14,7 +14,7 @@ module.exports.hydrateReq = async (req, res, next) => {
         req.user.lastname = decoded.lastname;
         console.log(`USER ID: ${req.user.id} | EMAIL: ${req.user.email}`)
       } else {
-          console.log('No user detected');
+          console.log('Token not recognised');
       };
     };
   } catch (err) {
