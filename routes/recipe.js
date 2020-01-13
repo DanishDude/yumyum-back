@@ -80,6 +80,8 @@ router.get('/recipeImage/:id', (req, res, next) => {
 router.post('/recipe', upload.single('recipeImage'), (req, res, next) => {
   if (req.user) req.body.user_id = req.user.id;
   if (req.file) req.body.image = req.file.filename;
+  console.log('TOTO', req.body);
+  
   connection.query('INSERT INTO recipe SET ?', req.body, (err, results) => {
     if (err) {
       console.log(err);
