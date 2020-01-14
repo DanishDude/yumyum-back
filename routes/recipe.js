@@ -40,10 +40,10 @@ router.get('/recipes', (req, res) => {
   });
 });
 
-router.get('/recipes/:userId', (req, res, next) => {
+router.get('/user-recipes', (req, res, next) => {
   try {
-    const { userId } = req.params;
-    connection.query(`SELECT * FROM recipe WHERE user_id = ${userId}`, (err, recipes) => {
+    if (req.user)
+    connection.query(`SELECT * FROM recipe WHERE user_id = ${req.user.id}`, (err, recipes) => {
       res.status(200).send(recipes);
     });
   } catch (err) {
@@ -79,7 +79,6 @@ router.get('/recipeImage/:id', (req, res, next) => {
 // If no image / file sent - app crash
 router.post('/recipe', upload.single('recipeImage'), (req, res, next) => {
   try {
-    console.log('TOTO', req.body);
     if (req.user) req.body.user_id = req.user.id;
     if (req.file) req.body.image = req.file.filename;
 
@@ -120,15 +119,16 @@ router.delete('/recipe/:id', (req, res, next) => {
     const { id } = req.params;
     connection.query(`SELECT id, image FROM recipe WHERE id = ${id}`, (err, result) => {
       const filePath = `./public/images/${result[0].image}`;
-      fs.access(filePath, (error) => {
-        if (!error) {
-          fs.unlink(filePath, (e) => {
-            console.log(e);
-          });
-        } else {
-          console.log(error);
-        }
-      });
+      if (result[0].image)
+        fs.access(filePath, (error) => {
+          if (!error) {
+            fs.unlink(filePath, (e) => {
+              console.log(e);
+            });
+          } else {
+            console.log(error);
+          }
+        });
     });
 
     connection.query(`DELETE FROM recipe WHERE id=${id}`, (err) => {
