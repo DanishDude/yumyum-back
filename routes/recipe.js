@@ -42,10 +42,11 @@ router.get('/recipes', (req, res) => {
 
 router.get('/user-recipes', (req, res, next) => {
   try {
-    if (req.user)
-    connection.query(`SELECT * FROM recipe WHERE user_id = ${req.user.id}`, (err, recipes) => {
-      res.status(200).send(recipes);
-    });
+    if (req.user) {
+      connection.query(`SELECT * FROM recipe WHERE user_id = ${req.user.id}`, (err, recipes) => {
+        res.status(200).send(recipes);
+      });
+    }
   } catch (err) {
     next(err);
   }
@@ -119,7 +120,7 @@ router.delete('/recipe/:id', (req, res, next) => {
     const { id } = req.params;
     connection.query(`SELECT id, image FROM recipe WHERE id = ${id}`, (err, result) => {
       const filePath = `./public/images/${result[0].image}`;
-      if (result[0].image)
+      if (result[0].image) {
         fs.access(filePath, (error) => {
           if (!error) {
             fs.unlink(filePath, (e) => {
@@ -129,6 +130,7 @@ router.delete('/recipe/:id', (req, res, next) => {
             console.log(error);
           }
         });
+      }
     });
 
     connection.query(`DELETE FROM recipe WHERE id=${id}`, (err) => {
