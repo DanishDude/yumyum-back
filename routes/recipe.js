@@ -78,7 +78,7 @@ router.get('/recipeImage/:id', (req, res, next) => {
 });
 
 // If no image / file sent - app crash
-router.post('/recipe', upload.single('recipeImage'), (req, res, next) => {
+router.post('/recipe', upload.single('image'), (req, res, next) => {
   try {
     if (req.user) req.body.user_id = req.user.id;
     if (req.file) req.body.image = req.file.filename;
@@ -94,10 +94,12 @@ router.post('/recipe', upload.single('recipeImage'), (req, res, next) => {
   }
 });
 
-router.put('/recipe/:id', upload.single('recipeImage'), (req, res, next) => {
+router.put('/recipe/:id', upload.single('image'), (req, res, next) => {
   try {
+    
     if (req.file) req.body.image = req.file.filename;
     const { id } = req.params;
+    console.log(req.body);
 
     connection.query(`UPDATE recipe SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
       res.status(200).send(results);
