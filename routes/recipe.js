@@ -19,7 +19,7 @@ const fileFilter = (req, file, cb) => {
     cb(null, true);
   } else {
     cb(new Error('Only .jpeg or .png files are accepted'), false);
-  }
+  };
 };
 
 const upload = multer({
@@ -36,7 +36,7 @@ router.get('/recipes', (req, res) => {
       res.status(500).send('Ah Snap :-/');
     } else {
       res.json(recipes);
-    }
+    };
   });
 });
 
@@ -46,10 +46,10 @@ router.get('/user-recipes', (req, res, next) => {
       connection.query(`SELECT * FROM recipe WHERE user_id = ${req.user.id}`, (err, recipes) => {
         res.status(200).send(recipes);
       });
-    }
+    };
   } catch (err) {
     next(err);
-  }
+  };
 });
 
 // TODO modify and delete image
@@ -74,7 +74,7 @@ router.get('/recipeImage/:id', (req, res, next) => {
     });
   } catch (err) {
     next(err);
-  }
+  };
 });
 
 // If no image / file sent - app crash
@@ -84,29 +84,53 @@ router.post('/recipe', upload.single('image'), (req, res, next) => {
     if (req.file) req.body.image = req.file.filename;
 
     connection.query('INSERT INTO recipe SET ?', req.body, (err, results) => {
-      if (results) {
+      if (results.insertId > 0 && results.serverStatus === 2) {
         connection.query(`SELECT * FROM recipe WHERE id=${results.insertId}`, (error, recipe) => {
           res.status(201).send(recipe[0]);
         });
-      }
+      };
     });
   } catch (err) {
     next(err);
-  }
+  };
 });
 
 router.put('/recipe/:id', upload.single('image'), (req, res, next) => {
   try {
     if (req.file) req.body.image = req.file.filename;
     const { id } = req.params;
-    console.log(req.body);
+    let oldImage;
+
+    connection.query(`SELECT * FROM recipe WHERE id=${id}`, (error, recipe) => {
+      if (recipe[0].user_id !== req.user.id) {
+        res.status(403).send('unauthorised');
+        next();
+      };
+      if (!error) {
+        oldImage = recipe[0].image;
+      };
+    });
 
     connection.query(`UPDATE recipe SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
-      res.status(200).send(results);
+      if (results.serverStatus === 2) {
+        if (oldImage) {
+          const filePath = `./public/images/${oldImage}`
+          fs.access(filePath, (error) => {
+            if (!error) {
+              fs.unlink(filePath, (e) => console.log(e));
+            } else {
+              console.log(error);
+            };
+          });
+        };
+        connection.query(`SELECT * FROM recipe WHERE id=${id}`, (error, recipe) => {
+          res.status(200).send(recipe[0]);
+        });
+      };
     });
   } catch (err) {
     next(err);
-  }
+  };
 });
 
 router.get('/recipe/:id', (req, res, next) => {
@@ -117,25 +141,28 @@ router.get('/recipe/:id', (req, res, next) => {
     });
   } catch (err) {
     next(err);
-  }
+  };
 });
 
 router.delete('/recipe/:id', (req, res, next) => {
   try {
     const { id } = req.params;
-    connection.query(`SELECT id, image FROM recipe WHERE id = ${id}`, (err, result) => {
+    connection.query(`SELECT id, user_id, image FROM recipe WHERE id = ${id}`, (err, result) => {
+      if (result[0].user_id !== req.user.id) {
+        res.status(403).send('unauthorised');
+        next();
+      };
+
       const filePath = `./public/images/${result[0].image}`;
       if (result[0].image) {
         fs.access(filePath, (error) => {
           if (!error) {
-            fs.unlink(filePath, (e) => {
-              console.log(e);
-            });
+            fs.unlink(filePath, (e) => console.log(e));
           } else {
             console.log(error);
-          }
+          };
         });
-      }
+      };
     });
 
     connection.query(`DELETE FROM recipe WHERE id=${id}`, (err) => {
@@ -143,11 +170,11 @@ router.delete('/recipe/:id', (req, res, next) => {
         res.status(500).send('Ah Snap :-/');
       } else {
         res.status(200).send(`recipe ${id} deleted`);
-      }
+      };
     });
   } catch (err) {
     next(err);
-  }
+  };
 });
 
 export default router;
