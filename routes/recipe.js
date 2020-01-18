@@ -84,10 +84,11 @@ router.post('/recipe', upload.single('image'), (req, res, next) => {
     if (req.file) req.body.image = req.file.filename;
 
     connection.query('INSERT INTO recipe SET ?', req.body, (err, results) => {
-      if (results) connection.query(`SELECT * FROM recipe WHERE id=${results.insertId}`,
-        (err, recipe) => {
+      if (results) {
+        connection.query(`SELECT * FROM recipe WHERE id=${results.insertId}`, (error, recipe) => {
           res.status(201).send(recipe[0]);
-      });
+        });
+      }
     });
   } catch (err) {
     next(err);
@@ -96,7 +97,6 @@ router.post('/recipe', upload.single('image'), (req, res, next) => {
 
 router.put('/recipe/:id', upload.single('image'), (req, res, next) => {
   try {
-    
     if (req.file) req.body.image = req.file.filename;
     const { id } = req.params;
     console.log(req.body);
