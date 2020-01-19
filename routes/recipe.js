@@ -19,7 +19,7 @@ const fileFilter = (req, file, cb) => {
     cb(null, true);
   } else {
     cb(new Error('Only .jpeg or .png files are accepted'), false);
-  };
+  }
 };
 
 const upload = multer({
@@ -36,7 +36,7 @@ router.get('/recipes', (req, res) => {
       res.status(500).send('Ah Snap :-/');
     } else {
       res.json(recipes);
-    };
+    }
   });
 });
 
@@ -46,10 +46,10 @@ router.get('/user-recipes', (req, res, next) => {
       connection.query(`SELECT * FROM recipe WHERE user_id = ${req.user.id}`, (err, recipes) => {
         res.status(200).send(recipes);
       });
-    };
+    }
   } catch (err) {
     next(err);
-  };
+  }
 });
 
 // TODO modify and delete image
@@ -74,7 +74,7 @@ router.get('/recipeImage/:id', (req, res, next) => {
     });
   } catch (err) {
     next(err);
-  };
+  }
 });
 
 // If no image / file sent - app crash
@@ -88,11 +88,11 @@ router.post('/recipe', upload.single('image'), (req, res, next) => {
         connection.query(`SELECT * FROM recipe WHERE id=${results.insertId}`, (error, recipe) => {
           res.status(201).send(recipe[0]);
         });
-      };
+      }
     });
   } catch (err) {
     next(err);
-  };
+  }
 });
 
 router.put('/recipe/:id', upload.single('image'), (req, res, next) => {
@@ -105,76 +105,83 @@ router.put('/recipe/:id', upload.single('image'), (req, res, next) => {
       if (recipe[0].user_id !== req.user.id) {
         res.status(403).send('unauthorised');
         next();
-      };
+      }
       if (!error) {
         oldImage = recipe[0].image;
-      };
+      }
     });
 
     connection.query(`UPDATE recipe SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
       if (results.serverStatus === 2) {
         if (oldImage) {
-          const filePath = `./public/images/${oldImage}`
+          const filePath = `./public/images/${oldImage}`;
           fs.access(filePath, (error) => {
             if (!error) {
-              fs.unlink(filePath, (e) => console.log(e));
+              fs.unlink(filePath, e => console.log(e));
             } else {
               console.log(error);
-            };
+            }
           });
-        };
+        }
         connection.query(`SELECT * FROM recipe WHERE id=${id}`, (error, recipe) => {
           res.status(200).send(recipe[0]);
         });
-      };
+      }
     });
   } catch (err) {
     next(err);
-  };
+  }
 });
 
 router.get('/recipe/:id', (req, res, next) => {
   try {
     const { id } = req.params;
     connection.query(`SELECT * FROM recipe WHERE id = ${id}`, (err, results) => {
-      res.status(200).send(results);
-    });
-  } catch (err) {
-    next(err);
-  };
-});
-
-router.delete('/recipe/:id', (req, res, next) => {
-  try {
-    const { id } = req.params;
-    connection.query(`SELECT id, user_id, image FROM recipe WHERE id = ${id}`, (err, result) => {
-      if (result[0].user_id !== req.user.id) {
-        res.status(403).send('unauthorised');
-        next();
-      };
-
-      const filePath = `./public/images/${result[0].image}`;
-      if (result[0].image) {
-        fs.access(filePath, (error) => {
-          if (!error) {
-            fs.unlink(filePath, (e) => console.log(e));
-          } else {
-            console.log(error);
-          };
-        });
-      };
-    });
-
-    connection.query(`DELETE FROM recipe WHERE id=${id}`, (err) => {
-      if (err) {
-        res.status(500).send('Ah Snap :-/');
+      if (!results[0]) {
+        res.status(404).send('not found');
       } else {
-        res.status(200).send(`recipe ${id} deleted`);
-      };
+        res.status(200).send(results);
+      }
     });
   } catch (err) {
     next(err);
-  };
-});
+  }
+})
+  .delete('/recipe/:id', (req, res, next) => {
+    try {
+      const { id } = req.params;
+
+      connection.query(`SELECT id, user_id, image FROM recipe WHERE id = ${id}`, (err, recipe) => {
+        if (!recipe[0]) {
+          res.status(404).send(`recipe with id ${id} not found`);
+        } else if (!req.user || recipe[0].user_id !== req.user.id) {
+          res.status(403).send('unauthorised');
+        } else {
+          connection.query(`DELETE FROM recipe WHERE id = ${id}`, (error, result) => {
+            if (result.affectedRows === 0) {
+              res.status(500).send(`delete recipe ${id} failed`);
+            } else {
+              if (recipe[0].image) {
+                const filePath = `./public/images/${recipe[0].image}`;
+
+                fs.access(filePath, (e) => {
+                  if (!e) {
+                    fs.unlink(filePath, (er) => {
+                      if (er) console.log(er);
+                    });
+                  } else {
+                    console.log(e);
+                  }
+                });
+              }
+              res.status(200).send(`recipe with id ${id} deleted`);
+            }
+          });
+        }
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 
 export default router;
