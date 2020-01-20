@@ -58,7 +58,7 @@ router.post('/signup', (req, res) => {
       res.status(500).send(err);
     } else {
       const token = jwt.sign(user, privateKey);
-      delete user.password
+      delete user.password;
       console.log('USER ', user);
       res.status(201).json({ user, token });
     }
@@ -86,27 +86,30 @@ router.get('/user', (req, res, next) => {
       res.status(200).send(req.user);
     } else {
       res.status(404).send('user not found');
-    };
-  } catch (err) {
-    next(err);
-  };
-})
-.put('/user', (req, res, next) => {
-  try {
-    
-    if (!req.user) {
-      res.status(403).send('unauthorised');
-    } else {
-      const { id } = req.user;
-      connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body], (err, results) => {
-        if (results.serverStatus === 2 && results.affectedRows > 0)
-          res.status(200).send(`user ${id} updated`);
-      });
-    };
-
+    }
   } catch (err) {
     next(err);
   }
 })
+  .put('/user', (req, res, next) => {
+    try {
+      console.log(req.body);
+      
+      if (!req.user) {
+        res.status(403).send('unauthorised');
+      } else {
+        console.log(req.body);
+        
+        const { id } = req.user;
+        connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
+          if (results.serverStatus === 2 && results.affectedRows > 0) {
+            res.status(200).send(`user ${id} updated`);
+          }
+        });
+      }
+    } catch (err) {
+      next(err);
+    }
+  });
 
 module.exports = router;
