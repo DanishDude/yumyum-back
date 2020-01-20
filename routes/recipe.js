@@ -40,7 +40,7 @@ router.get('/recipes', (req, res) => {
   });
 });
 
-router.get('/user-recipes', (req, res, next) => {
+router.get('/user/recipes', (req, res, next) => {
   try {
     if (req.user) {
       connection.query(`SELECT * FROM recipe WHERE user_id = ${req.user.id}`, (err, recipes) => {
@@ -53,24 +53,28 @@ router.get('/user-recipes', (req, res, next) => {
 });
 
 // TODO modify and delete image
-router.get('/recipeImage/:id', (req, res, next) => {
+router.get('/recipe/:id/image', (req, res, next) => {
   try {
     const id = req.params.id;
     connection.query('SELECT image FROM recipe WHERE id = ?', id, (err, result) => {
-      const fileName = result[0].image || 'empty_plate_1575398123409.jpg';
+      if (!result[0].image) {
+        res.status(404).send('not found');
+      } else {
+        const fileName = result[0].image || 'empty_plate_1575398123409.jpg';
 
-      const options = {
-        root: 'public/images/',
-        dotfiles: 'deny',
-        headers: {
-          'x-timestamp': Date.now(),
-          'x-sent': true
-        }
-      };
+        const options = {
+          root: 'public/images/',
+          dotfiles: 'deny',
+          headers: {
+            'x-timestamp': Date.now(),
+            'x-sent': true
+          }
+        };
 
-      res.sendFile(fileName, options, () => {
-        if (err) throw new Error(err);
-      });
+        res.sendFile(fileName, options, () => {
+          if (err) throw new Error(err);
+        });
+      }
     });
   } catch (err) {
     next(err);
