@@ -9,6 +9,7 @@ module.exports.hydrateReq = async (req, res, next) => {
         req.user = {};
         req.user.id = decoded.id;
         req.user.email = decoded.email;
+        req.user.picture = decoded.picture;
         req.user.displayname = decoded.displayname;
         req.user.firstname = decoded.firstname;
         req.user.lastname = decoded.lastname;

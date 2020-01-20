@@ -15,7 +15,7 @@ passport.use('local', new LocalStrategy({
   session: false,
 }, (email, password, done) => {
   try {
-    connection.query(`SELECT id, email, displayname, firstname, lastname, password
+    connection.query(`SELECT id, email, picture, displayname, firstname, lastname, password
                       FROM user WHERE email = ?`, [email], (err, results) => {
       if (err) {
         return done(err, false);
@@ -25,6 +25,7 @@ passport.use('local', new LocalStrategy({
         const user = {
           id: results[0].id,
           email: results[0].email,
+          picture: results[0].picture,
           displayname: results[0].displayname,
           firstname: results[0].firstname,
           lastname: results[0].lastname
@@ -89,6 +90,23 @@ router.get('/user', (req, res, next) => {
   } catch (err) {
     next(err);
   };
-});
+})
+.put('/user', (req, res, next) => {
+  try {
+    
+    if (!req.user) {
+      res.status(403).send('unauthorised');
+    } else {
+      const { id } = req.user;
+      connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body], (err, results) => {
+        if (results.serverStatus === 2 && results.affectedRows > 0)
+          res.status(200).send(`user ${id} updated`);
+      });
+    };
+
+  } catch (err) {
+    next(err);
+  }
+})
 
 module.exports = router;
