@@ -91,19 +91,44 @@ router.get('/user', (req, res, next) => {
     next(err);
   }
 })
-  .put('/user', (req, res, next) => {
+
+router.put('/user', (req, res, next) => {
     try {
-      console.log(req.body);
-      
       if (!req.user) {
         res.status(403).send('unauthorised');
       } else {
+        const { id } = req.user;
+        console.log('ID ' + id);
         console.log(req.body);
         
-        const { id } = req.user;
+
+       /*  const allowed = ['displayname', 'firstname', 'lastname'];
+        let data = {}
+
+        for (const [key, value] of Object.entries(req.body)) {
+          console.log('plop');
+
+          if (allowed.includes(key)) data[key] = value;
+        };
+        //console.log('data ' + data);
+
+        for (const [key, value] of Object.entries(data)) {
+          console.log('toto');
+          
+          console.log([key, value]);
+        }; */
+        
+        
+        
         connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
-          if (results.serverStatus === 2 && results.affectedRows > 0) {
+          if (!err/* results.serverStatus === 2 && results.affectedRows > 0 */) {
+            console.log(results);
+            
             res.status(200).send(`user ${id} updated`);
+          } else {
+            console.log(err);
+            
+            res.status(500).json(err);
           }
         });
       }

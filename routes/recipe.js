@@ -101,6 +101,8 @@ router.post('/recipe', upload.single('image'), (req, res, next) => {
 
 router.put('/recipe/:id', upload.single('image'), (req, res, next) => {
   try {
+    console.log(req.body);
+    
     if (req.file) req.body.image = req.file.filename;
     const { id } = req.params;
     let oldImage;
