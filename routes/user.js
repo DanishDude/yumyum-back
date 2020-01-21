@@ -90,51 +90,35 @@ router.get('/user', (req, res, next) => {
   } catch (err) {
     next(err);
   }
-})
+});
 
 router.put('/user', (req, res, next) => {
-    try {
-      if (!req.user) {
-        res.status(403).send('unauthorised');
-      } else {
-        const { id } = req.user;
-        console.log('ID ' + id);
-        console.log(req.body);
-        
+  try {
+    if (!req.user) {
+      res.status(403).send('unauthorised');
+    } else {
+      const { id } = req.user;
+      console.log(`ID ${id}`);
+      console.log(req.body);
+      /* req.body.displayname = ' bobo';
+      console.log(req.body); */
 
-       /*  const allowed = ['displayname', 'firstname', 'lastname'];
-        let data = {}
 
-        for (const [key, value] of Object.entries(req.body)) {
-          console.log('plop');
+      connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
+        if (!err/* results.serverStatus === 2 && results.affectedRows > 0 */) {
+          console.log(results);
 
-          if (allowed.includes(key)) data[key] = value;
-        };
-        //console.log('data ' + data);
+          res.status(200).send(`user ${id} updated`);
+        } else {
+          console.log(err);
 
-        for (const [key, value] of Object.entries(data)) {
-          console.log('toto');
-          
-          console.log([key, value]);
-        }; */
-        
-        
-        
-        connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
-          if (!err/* results.serverStatus === 2 && results.affectedRows > 0 */) {
-            console.log(results);
-            
-            res.status(200).send(`user ${id} updated`);
-          } else {
-            console.log(err);
-            
-            res.status(500).json(err);
-          }
-        });
-      }
-    } catch (err) {
-      next(err);
+          res.status(500).json(err);
+        }
+      });
     }
-  });
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;
