@@ -99,7 +99,8 @@ router.put('/user', (req, res, next) => {
     } else {
       const { id } = req.user;
       console.log(`ID ${id}`);
-      console.log(req.body);
+      console.log('BODY ' + req.body);
+      console.log('BODY ' + JSON.stringify(req.body));
       /* req.body.displayname = ' bobo';
       console.log(req.body); */
 
