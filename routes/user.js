@@ -52,6 +52,8 @@ router.post('/signup', (req, res) => {
     password: bcrypt.hashSync(req.body.password, 10),
   };
 
+  console.log(user);
+
   connection.query('INSERT INTO user SET ?', user, (err) => {
     if (err) {
       console.log(err);
@@ -68,15 +70,15 @@ router.post('/signup', (req, res) => {
 router.post('/login', (req, res) => {
   passport.authenticate('local', (err, user) => {
     console.log(user);
-    
+
     if (err) {
       console.log(err);
       return res.sendStatus(500);
-    }; 
+    }
 
     if (!user) {
       return res.status(401).send('user not found');
-    }; 
+    }
     console.log('USER: ', user);
     const token = jwt.sign(user, privateKey);
     return res.json({ user, token });
@@ -99,147 +101,41 @@ router.put('/user', (req, res, next) => {
   try {
     if (!req.user) return res.status(403).send('unauthorised');
 
-      const { id } = req.user;
-      console.log('BODY ' + JSON.stringify(req.body));
+    const { id } = req.user;
+    console.log(`BODY ${JSON.stringify(req.body)}`);
 
-      connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
-        if (results.serverStatus === 2 && results.affectedRows > 0) {
-          res.status(200).send(`user ${id} updated`);
-        } else {
-          console.log(err);
-          res.status(500).json(err);
-        }
-      });
+    connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
+      if (results.serverStatus === 2 && results.affectedRows > 0) {
+        res.status(200).send(`user ${id} updated`);
+      } else {
+        console.log(err);
+        res.status(500).json(err);
+      }
+    });
   } catch (err) {
     next(err);
   }
 });
 
-router.put('/user/toto', (req, res, next) => {
-  passport.authenticate('local', async (err, user) => {
-    console.log(user);
-      
-      if (err) return res.status(500).send(err);
-      if (!user) return res.status(401).send('user not found');
+router.put('/user/password', (req, res, next) => {
+  if (!req.user) res.status(403).send('unauthorized');
 
-      console.log('USER ' + JSON.stringify(user));
-      
-      if (!req.body.newPassword) return res.status(400).send('newPassword not provided')
+  passport.authenticate('local', (err, user) => {
+    if (err) return res.status(500).send(err);
+    if (!user) return res.status(401).send('user not found');
+    if (!req.body.newPassword) return res.status(400).send('newPassword not provided');
 
-      const generateNewUser = (userInfo, data) => {
-        return {
-          ...userInfo,
-          ...data,
-          password: bcrypt.hash(data.newPassword, 10)
-        };
-      };
+    const password = { password: bcrypt.hashSync(req.body.newPassword, 10) };
 
-    const newUser = await generateNewUser(user, req.body);
-
-
-    delete newUser.newPassword;
-
-    console.log('here ' + JSON.stringify(newUser));
-    console.log(req.body);
-    
-    const { id } = req.user;
-    
-    connection.query(`UPDATE user SET ? WHERE id = ${id}`, [newUser, id], (err, results) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).send(err);
-      } else 
-      if (results.serverStatus === 2 && results.affectedRows === 1) {
-        const token = jwt.sign(user, privateKey);
-        delete newUser.password;
-        console.log('newUser ' + newUser);
-        
-        return res.status(200).json({newUser, token});
-      } else {
-        console.log(err);
-        return res.status(500).send('Ah snap');
-      };
+    connection.query(`UPDATE user SET ? WHERE id = ${user.id}`, [password, user.id], (error) => {
+      if (error) {
+        console.log(error);
+        return res.status(500).send(error);
+      }
+      const token = jwt.sign(user, privateKey);
+      return res.status(200).json({ user, token });
     });
-
-    return res.status(200).send(req.body);
   })(req, res, next);
 });
-
-router.put('/user/password', passport.authenticate('local', (err, user) => {
-      
-      console.log(user);
-      
-      if (err) {
-        console.log(err);
-        return res.sendStatus(500);
-      }; 
-  
-      if (!user) return res.status(401).send('user not found');
-
-      console.log('USER ' + user);
-      //res.status(200).send(user);
-      
-      
-      
-      if (!req.body.newPassword) return res.status(400).send('newPassword not provided')
-      
-      const newUser = {
-        ...user,
-        ...req.body,
-        password: bcrypt.hash(req.body.newPassword, 10)
-      };
-
-      delete newUser.newPassword;
-  
-      console.log('here ' + JSON.stringify(newUser));
-      console.log(req.body);
-      
-      /* const { id } = req.user;
-      
-      connection.query(`UPDATE user SET ? WHERE id = ${id}`, [newUser, id], (err, results) => {
-        if (results.serverStatus === 2 && results.affectedRows > 0) {
-          const token = jwt.sign(user, privateKey);
-          delete newUser.password;
-          console.log('newUser ' + newUser);
-          
-          res.status(200).json({newUser, token});
-        } else {
-          console.log(err);
-          res.status(500).json(err);
-        };
-      }); */
-
-      return res.status(200).send('next step');
-
-    }), ((req, res, user) => {
-      const newUser = {
-        ...user,
-        ...req.body,
-        password: bcrypt.hash(req.body.newPassword, 10)
-      };
-
-      delete newUser.newPassword;
-  
-      console.log('here ' + JSON.stringify(newUser));
-      console.log(req.body);
-      
-      const { id } = req.user;
-      
-      connection.query(`UPDATE user SET ? WHERE id = ${id}`, [newUser, id], (err, results) => {
-        if (results.serverStatus === 2 && results.affectedRows > 0) {
-          const token = jwt.sign(user, privateKey);
-          delete newUser.password;
-          console.log('newUser ' + newUser);
-          
-          res.status(200).json({newUser, token});
-        } else {
-          console.log(err);
-          res.status(500).json(err);
-        };
-      });
-      
-    })
-  
-)
 
 module.exports = router;
