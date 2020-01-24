@@ -98,36 +98,19 @@ router.get('/user', (req, res, next) => {
 });
 
 router.put('/user', (req, res, next) => {
-  try {
-    if (!req.user) return res.status(403).send('unauthorised');
-
-    const { id } = req.user;
-    console.log(`BODY ${JSON.stringify(req.body)}`);
-
-    connection.query(`UPDATE user SET ? WHERE id = ${id}`, [req.body, id], (err, results) => {
-      if (results.serverStatus === 2 && results.affectedRows > 0) {
-        res.status(200).send(`user ${id} updated`);
-      } else {
-        console.log(err);
-        res.status(500).json(err);
-      }
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.put('/user/password', (req, res, next) => {
   if (!req.user) res.status(403).send('unauthorized');
 
   passport.authenticate('local', (err, user) => {
     if (err) return res.status(500).send(err);
     if (!user) return res.status(401).send('user not found');
-    if (!req.body.newPassword) return res.status(400).send('newPassword not provided');
 
-    const password = { password: bcrypt.hashSync(req.body.newPassword, 10) };
+    for (const key of Object.keys(user)) {
+      if (!(key === 'id' || key === 'email')) user[key] = req.body[key];
+    };
+    
+    if (req.body.newPassword) user.password = bcrypt.hashSync(req.body.newPassword, 10)
 
-    connection.query(`UPDATE user SET ? WHERE id = ${user.id}`, [password, user.id], (error) => {
+    connection.query(`UPDATE user SET ? WHERE id = ${user.id}`, [user], (error) => {
       if (error) {
         console.log(error);
         return res.status(500).send(error);
