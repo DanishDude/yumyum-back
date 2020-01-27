@@ -102,7 +102,7 @@ router.put('/user', (req, res, next) => {
 
   passport.authenticate('local', (err, user) => {
     if (err) return res.status(500).send(err);
-    if (!user) return res.status(401).send('user not found');
+    if (!user) return res.status(401).json('user not found');
 
     for (const key of Object.keys(user)) {
       if (!(key === 'id' || key === 'email')) user[key] = req.body[key];
