@@ -115,7 +115,6 @@ router.put('/user', (req, res, next) => {
         console.log(error);
         return res.status(500).send(error);
       }
-      console.log(user);
       delete user.password;
       const token = jwt.sign(user, privateKey);
       return res.status(200).json({ user, token });
