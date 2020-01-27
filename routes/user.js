@@ -15,7 +15,8 @@ passport.use('local', new LocalStrategy({
   session: false,
 }, (email, password, done) => {
   try {
-    connection.query('SELECT id, email, password FROM user WHERE email = ?', [email], (err, results) => {
+    connection.query(`SELECT id, email, picture, displayname, firstname, lastname, password
+                      FROM user WHERE email = ?`, [email], (err, results) => {
       if (err) {
         return done(err, false);
       } else if (results.length === 0) {
@@ -24,6 +25,10 @@ passport.use('local', new LocalStrategy({
         const user = {
           id: results[0].id,
           email: results[0].email,
+          picture: results[0].picture,
+          displayname: results[0].displayname,
+          firstname: results[0].firstname,
+          lastname: results[0].lastname
         };
         return done(null, user);
       }
@@ -47,24 +52,30 @@ router.post('/signup', (req, res) => {
     password: bcrypt.hashSync(req.body.password, 10),
   };
 
+  console.log(user);
+
   connection.query('INSERT INTO user SET ?', user, (err) => {
     if (err) {
       console.log(err);
       res.status(500).send(err);
     } else {
-      console.log('USER ', user);
       const token = jwt.sign(user, privateKey);
-      res.status(201).json({ email: user.email, token });
+      delete user.password;
+      console.log('USER ', user);
+      res.status(201).json({ user, token });
     }
   });
 });
 
 router.post('/login', (req, res) => {
   passport.authenticate('local', (err, user) => {
+    console.log(user);
+
     if (err) {
       console.log(err);
       return res.sendStatus(500);
     }
+
     if (!user) {
       return res.status(401).send('user not found');
     }
@@ -80,10 +91,35 @@ router.get('/user', (req, res, next) => {
       res.status(200).send(req.user);
     } else {
       res.status(404).send('user not found');
-    };
+    }
   } catch (err) {
     next(err);
-  };
+  }
+});
+
+router.put('/user', (req, res, next) => {
+  if (!req.user) res.status(403).send('unauthorized');
+
+  passport.authenticate('local', (err, user) => {
+    if (err) return res.status(500).send(err);
+    if (!user) return res.status(401).json('user not found');
+
+    for (const key of Object.keys(user)) {
+      if (!(key === 'id' || key === 'email')) user[key] = req.body[key];
+    };
+    
+    if (req.body.newPassword) user.password = bcrypt.hashSync(req.body.newPassword, 10)
+
+    connection.query(`UPDATE user SET ? WHERE id = ${user.id}`, [user], (error) => {
+      if (error) {
+        console.log(error);
+        return res.status(500).send(error);
+      }
+      delete user.password;
+      const token = jwt.sign(user, privateKey);
+      return res.status(200).json({ user, token });
+    });
+  })(req, res, next);
 });
 
 module.exports = router;
