@@ -52,7 +52,6 @@ router.get('/user/recipes', (req, res, next) => {
   }
 });
 
-// TODO modify and delete image
 router.get('/recipe/:id/image', (req, res, next) => {
   try {
     const id = req.params.id;
@@ -97,6 +96,22 @@ router.post('/recipe', upload.single('image'), (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+router.get('/recipe/:id', (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    connection.query(`SELECT * FROM recipe WHERE id=${id}`, (error, recipe) => {
+      if (!recipe[0]) {
+        res.status(404).send('not found');
+      } else {
+        res.status(200).send(recipe[0]);
+      };
+    });
+  } catch (err) {
+    next(err);
+  };
 });
 
 router.put('/recipe/:id', upload.single('image'), (req, res, next) => {
