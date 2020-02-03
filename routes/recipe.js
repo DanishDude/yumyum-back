@@ -40,7 +40,7 @@ router.get('/recipes', (req, res) => {
   });
 });
 
-router.get('/user/recipes', (req, res, next) => {
+router.get('/recipes/user', (req, res, next) => {
   try {
     if (req.user) {
       connection.query(`SELECT * FROM recipe WHERE user_id = ${req.user.id}`, (err, recipes) => {
