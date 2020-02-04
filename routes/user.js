@@ -9,6 +9,36 @@ import { privateKey } from '../conf.json';
 
 const router = express.Router();
 
+router.get('/user/email', (req, res, next) => {
+  try {
+    const { email } = req.body;
+    console.log(req.body);
+    
+    connection.query(`SELECT email FROM user WHERE email = '${email}'`, (error, result) => {
+      if (result[0]) return res.status(200).json(result[0]);
+
+      return res.status(404).json('not found');
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/user/displayname', (req, res, next) => {
+  try {
+    const { displayname } = req.body;
+    console.log(req.body);
+
+    connection.query(`SELECT displayname FROM user WHERE displayname = '${displayname}'`, (error, result) => {
+      if (result[0]) return res.status(200).json(result[0]);
+
+      return res.status(404).json('not found');
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 passport.use('local', new LocalStrategy({
   usernameField: 'email',
   passwordField: 'password',
@@ -106,9 +136,9 @@ router.put('/user', (req, res, next) => {
 
     for (const key of Object.keys(user)) {
       if (!(key === 'id' || key === 'email')) user[key] = req.body[key];
-    };
-    
-    if (req.body.newPassword) user.password = bcrypt.hashSync(req.body.newPassword, 10)
+    }
+
+    if (req.body.newPassword) user.password = bcrypt.hashSync(req.body.newPassword, 10);
 
     connection.query(`UPDATE user SET ? WHERE id = ${user.id}`, [user], (error) => {
       if (error) {
