@@ -51,13 +51,13 @@ router.post('/signup', async (req, res, next) => {
 
     for (const [key, value] of Object.entries(req.body)) {
       if (!allowed.includes(key)) delete req.body[key];
-      
+
       if (key === 'email' && (!regex.test(String(value).toLowerCase()) || value === ''))
-        return res.status(400).send('invalid email format');
-      
+        {return res.status(400).send('invalid email format');}
+
       if (key === 'displayname' && (value.length < 1 || value.length > 15))
-        return res.status(400).send('displayname must have 1-15 characters');
-    };
+        {return res.status(400).send('displayname must have 1-15 characters');}
+    }
 
     const user = {
       ...req.body,
