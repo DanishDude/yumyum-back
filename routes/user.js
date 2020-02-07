@@ -44,27 +44,40 @@ passport.use(new JwtStrategy({
   secretOrKey: privateKey,
 }, (jwtPayload, cb) => cb(null, jwtPayload)));
 
-router.post('/signup', (req, res) => {
-  console.log('REQ.BODY ', req.body);
+router.post('/signup', async (req, res, next) => {
+  try {
+    const allowed = ['email', 'displayname', 'firstname', 'lastname', 'password'];
+    const regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-  const user = {
-    ...req.body,
-    password: bcrypt.hashSync(req.body.password, 10),
-  };
+    for (const [key, value] of Object.entries(req.body)) {
+      if (!allowed.includes(key)) delete req.body[key];
 
-  console.log(user);
+      if (key === 'email' && (!regex.test(String(value).toLowerCase()) || value === ''))
+        {return res.status(400).send('invalid email format');}
 
-  connection.query('INSERT INTO user SET ?', user, (err) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send(err);
-    } else {
-      const token = jwt.sign(user, privateKey);
-      delete user.password;
-      console.log('USER ', user);
-      res.status(201).json({ user, token });
+      if (key === 'displayname' && (value.length < 1 || value.length > 15))
+        {return res.status(400).send('displayname must have 1-15 characters');}
     }
-  });
+
+    const user = {
+      ...req.body,
+      password: bcrypt.hashSync(req.body.password, 10),
+    };
+
+    connection.query('INSERT INTO user SET ?', user, (err) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send(err);
+      } else {
+        const token = jwt.sign(user, privateKey);
+        delete user.password;
+        console.log('USER ', user);
+        res.status(201).json({ user, token });
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.post('/login', (req, res) => {
@@ -106,9 +119,9 @@ router.put('/user', (req, res, next) => {
 
     for (const key of Object.keys(user)) {
       if (!(key === 'id' || key === 'email')) user[key] = req.body[key];
-    };
-    
-    if (req.body.newPassword) user.password = bcrypt.hashSync(req.body.newPassword, 10)
+    }
+
+    if (req.body.newPassword) user.password = bcrypt.hashSync(req.body.newPassword, 10);
 
     connection.query(`UPDATE user SET ? WHERE id = ${user.id}`, [user], (error) => {
       if (error) {
