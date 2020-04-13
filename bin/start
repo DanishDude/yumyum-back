@@ -10,6 +10,7 @@
 // enables ES6 ('import'.. etc) in Node
 require('babel-core/register');
 require('babel-polyfill');
+require('dotenv').config();
 
 const app = require('../app').default;
 const debug = require('debug')('yumyum-back:server');

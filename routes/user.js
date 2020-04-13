@@ -64,13 +64,14 @@ router.post('/signup', async (req, res, next) => {
       password: bcrypt.hashSync(req.body.password, 10),
     };
 
-    connection.query('INSERT INTO user SET ?', user, (err) => {
+    connection.query('INSERT INTO user SET ?', user, (err, results) => {
       if (err) {
         console.log(err);
         res.status(500).send(err);
       } else {
-        const token = jwt.sign(user, privateKey);
         delete user.password;
+        user.id = results.insertId;
+        const token = jwt.sign(user, privateKey);
         console.log('USER ', user);
         res.status(201).json({ user, token });
       }
