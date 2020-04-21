@@ -1,6 +1,9 @@
 {
   "name": "yumyum-back",
   "version": "0.0.0",
+  "engines": {
+    "node": "10.15.3"
+  },
   "private": true,
   "main": "app.js",
   "scripts": {
